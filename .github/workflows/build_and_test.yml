@@ -1,6 +1,6 @@
 # See https://github.com/actions-rs/example/blob/master/.github/workflows/quickstart.yml
 
-on: [push, pull_request]
+on: [pull_request]
 name: Rust CI
 jobs:
   check:
