@@ -58,3 +58,19 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+  codecov:
+    name: Codecov
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+        profile: minimal
+          toolchain: stable
+          override: true
+      - name: Run Tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
