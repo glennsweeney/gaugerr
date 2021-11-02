@@ -5,12 +5,12 @@ const MACHTOL: f64 = f64::EPSILON;
 
 fn ratfun<const M: usize, const N: usize>(x: f64, ak: [f64; M], bk: [f64; N]) -> f64 {
     let mut num = 0.0;
-    for i in 0..M {
-        num = num * x + ak[i]
+    for element in ak {
+        num = num * x + element
     }
     let mut den = 0.0;
-    for i in 0..N {
-        den = den * x + bk[i]
+    for element in bk {
+        den = den * x + element
     }
     return num / den;
 }
@@ -97,7 +97,7 @@ fn gamma_pos(x: f64) -> f64 {
         let mut a = x;
         while a >= 3.0 {
             a -= 1.0;
-            g = a * g;
+            g *= a;
         }
         return g * ratfun(a, A, B);
     } else if x < GIANT.ln() {
@@ -170,7 +170,7 @@ fn alfa(x: f64) -> f64 {
         return x + 0.25;
     } else {
         let lnx = if x <= DWARF { DWARF.ln() } else { x.ln() };
-        return -0.6931 / lnx;
+        return -std::f64::consts::LN_2 / lnx;
     }
 }
 
@@ -244,11 +244,11 @@ fn qtaylor(a: f64, x: f64, eps: f64) -> f64 {
     let mut t: f64 = 1.0;
     let mut v: f64 = 1.0;
     while (t / v).abs() >= eps {
-        p = p + x;
-        q = q + r;
+        p += x;
+        q += r;
         r += 2.0;
         t = -p * t / q;
-        v = v + t;
+        v += t;
     }
     v = a * (1.0 - s) * ((a + 1.0) * lnx).exp() * v / (a + 1.0);
     return u + v;
@@ -260,7 +260,7 @@ fn ptaylor(a: f64, x: f64, eps: f64) -> f64 {
     while c / p >= eps {
         r += 1.0;
         c = x * c / r;
-        p = p + c;
+        p += c;
     }
     return p;
 }
@@ -300,22 +300,18 @@ pub fn incomplete_gamma(a: f64, x: f64, eps: f64) -> (f64, f64) {
             let p = ptaylor(a, x, eps) * dp;
             let q = 1.0 - p;
             return (p, q);
+        } else if x < 1.0 {
+            let q = qtaylor(a, x, eps);
+            let p = 1.0 - q;
+            return (p, q);
         } else {
-            if x < 1.0 {
-                let q = qtaylor(a, x, eps);
-                let p = 1.0 - q;
-                return (p, q);
-            } else {
-                qfraction();
-                return (0.0, 0.0); // TBD
-            }
+            qfraction();
+            return (0.0, 0.0); // TBD
         }
+    } else if a > x {
+        return (0.0, 1.0);
     } else {
-        if a > x {
-            return (0.0, 1.0);
-        } else {
-            return (1.0, 0.0);
-        }
+        return (1.0, 0.0);
     }
 }
 
