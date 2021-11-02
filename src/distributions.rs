@@ -12,10 +12,11 @@ fn ratfun<const M: usize, const N: usize>(x: f64, ak: [f64; M], bk: [f64; N]) ->
     for element in bk {
         den = den * x + element
     }
-    return num / den;
+    num / den
 }
 
 fn auxln(x: f64) -> f64 {
+    #![allow(clippy::many_single_char_names)]
     const A: [f64; 5] = [
         3.899341537646e-5,
         -8.310525299547e-4,
@@ -30,25 +31,25 @@ fn auxln(x: f64) -> f64 {
         1.000000000000e0,
     ];
     if x <= -1.0 {
-        return -GIANT;
+        -GIANT
     } else if x < -0.7 || x > 1.36 {
-        return (1.0 + x).ln() - x;
+        (1.0 + x).ln() - x
     } else if x.abs() < MACHTOL {
-        return -0.5 * x.powi(2);
-    }
-    if x > 0.0 {
-        return x.powi(2) * ratfun(x, A, B);
+        -0.5 * x.powi(2)
+    } else if x > 0.0 {
+        x.powi(2) * ratfun(x, A, B)
     } else {
         let z = -x / (1.0 + x);
         if z > 1.36 {
-            return -((1.0 + z).ln() - z) + x * z;
+            -((1.0 + z).ln() - z) + x * z
         } else {
-            return -z.powi(2) * ratfun(z, A, B) + x * z;
+            -z.powi(2) * ratfun(z, A, B) + x * z
         }
     }
 }
 
 fn gamma_pos(x: f64) -> f64 {
+    #![allow(clippy::many_single_char_names)]
     const A: [f64; 5] = [
         9.308302710346e-3,
         -4.880928874015e-2,
@@ -87,11 +88,11 @@ fn gamma_pos(x: f64) -> f64 {
         return g;
     }
     if x < 1.0 {
-        return ratfun(x + 2.0, A, B) / (x * (x + 1.0));
+        ratfun(x + 2.0, A, B) / (x * (x + 1.0))
     } else if x < 2.0 {
-        return ratfun(x + 1.0, A, B) / x;
+        ratfun(x + 1.0, A, B) / x
     } else if x < 3.0 {
-        return ratfun(x, A, B);
+        ratfun(x, A, B)
     } else if x < 10.0 {
         let mut g = 1.0;
         let mut a = x;
@@ -99,34 +100,34 @@ fn gamma_pos(x: f64) -> f64 {
             a -= 1.0;
             g *= a;
         }
-        return g * ratfun(a, A, B);
+        g * ratfun(a, A, B)
     } else if x < GIANT.ln() {
         let a = 1.0 / x.powi(2);
         let g = (1.0 + a * (-3.333333333333e-2 + a * 9.52380952381e-3)) / (12.0 * x);
         let a = -x + (x - 0.5) * x.ln() + g + (2.0 * PI).sqrt().ln();
         if a < GIANT.ln() {
-            return a.exp();
+            a.exp()
         } else {
-            return GIANT;
+            GIANT
         }
     } else {
-        return GIANT;
+        GIANT
     }
 }
 
 pub fn gamma(x: f64) -> f64 {
     if x == 0.0 {
-        return std::f64::INFINITY;
+        std::f64::INFINITY
     } else if x > 0.0 {
-        return gamma_pos(x);
+        gamma_pos(x)
     } else {
         let xp = x.abs();
         let k = xp.round();
         let dw = if k == 0.0 { DWARF } else { 1.0 + xp } * MACHTOL;
         if (k - xp).abs() < dw {
-            return std::f64::INFINITY;
+            std::f64::INFINITY
         } else {
-            return PI / (PI * x).sin() / gamma_pos(1.0 - x);
+            PI / (PI * x).sin() / gamma_pos(1.0 - x)
         }
     }
 }
@@ -148,29 +149,29 @@ fn gammastar(x: f64) -> f64 {
     ];
     if x > 1.0e10 {
         if x > 1.0 / (12.0 * MACHTOL) {
-            return 1.0;
+            1.0
         } else {
-            return 1.0 + 1.0 / (12.0 * x);
+            1.0 + 1.0 / (12.0 * x)
         }
     } else if x > 12.0 {
         let a = 1.0 / x;
-        return ratfun(a, A1, B1);
+        ratfun(a, A1, B1)
     } else if x > 1.0 {
-        return ratfun(x, A2, B2);
+        ratfun(x, A2, B2)
     } else if x > DWARF {
         let a = 1.0 + 1.0 / x;
-        return gammastar(x + 1.0) * a.sqrt() * (-1.0 + x * a.ln()).exp();
+        gammastar(x + 1.0) * a.sqrt() * (-1.0 + x * a.ln()).exp()
     } else {
-        return 1.0 / ((PI * 2.0).sqrt() * DWARF.sqrt());
+        1.0 / ((PI * 2.0).sqrt() * DWARF.sqrt())
     }
 }
 
 fn alfa(x: f64) -> f64 {
     if x > 0.25 {
-        return x + 0.25;
+        x + 0.25
     } else {
         let lnx = if x <= DWARF { DWARF.ln() } else { x.ln() };
-        return -std::f64::consts::LN_2 / lnx;
+        -std::f64::consts::LN_2 / lnx
     }
 }
 
@@ -188,15 +189,15 @@ fn exmin1(x: f64) -> f64 {
         1.000000000000e0,
     ];
     if x < MACHTOL.ln() {
-        return -1.0;
+        -1.0
     } else if x > GIANT.ln() {
-        return GIANT;
+        GIANT
     } else if x < -0.69 || x > 0.41 {
-        return x.exp() - 1.0;
+        x.exp() - 1.0
     } else if x.abs() < MACHTOL {
-        return x;
+        x
     } else {
-        return x * ratfun(x, A, B);
+        x * ratfun(x, A, B)
     }
 }
 
@@ -215,19 +216,20 @@ fn auxgam(x: f64) -> f64 {
         1.000000000000e0,
     ];
     if x <= -1.0 {
-        return -0.5;
+        -0.5
     } else if x < 0.0 {
-        return -(1.0 + (x + 1.0).powi(2) * ratfun(x + 1.0, A, B)) / (1.0 - x);
+        -(1.0 + (x + 1.0).powi(2) * ratfun(x + 1.0, A, B)) / (1.0 - x)
     } else if x <= 1.0 {
-        return ratfun(x, A, B);
+        ratfun(x, A, B)
     } else if x <= 2.0 {
-        return ((x - 2.0) * ratfun(x - 1.0, A, B) - 1.0) / x.powi(2);
+        ((x - 2.0) * ratfun(x - 1.0, A, B) - 1.0) / x.powi(2)
     } else {
-        return (1.0 / gamma(x + 1.0) - 1.0) / (x * (x - 1.0));
+        (1.0 / gamma(x + 1.0) - 1.0) / (x * (x - 1.0))
     }
 }
 
 fn qtaylor(a: f64, x: f64, eps: f64) -> f64 {
+    #![allow(clippy::many_single_char_names)]
     let lnx = if x <= DWARF { DWARF.ln() } else { x.ln() };
     let r = a * lnx;
 
@@ -251,9 +253,10 @@ fn qtaylor(a: f64, x: f64, eps: f64) -> f64 {
         v += t;
     }
     v = a * (1.0 - s) * ((a + 1.0) * lnx).exp() * v / (a + 1.0);
-    return u + v;
+    u + v
 }
 fn ptaylor(a: f64, x: f64, eps: f64) -> f64 {
+    #![allow(clippy::many_single_char_names)]
     let mut p = 1.0;
     let mut c = 1.0;
     let mut r = a;
@@ -262,9 +265,30 @@ fn ptaylor(a: f64, x: f64, eps: f64) -> f64 {
         c = x * c / r;
         p += c;
     }
-    return p;
+    p
 }
-fn qfraction() {}
+
+fn qfraction(a: f64, x: f64, eps: f64) -> f64 {
+    #![allow(clippy::many_single_char_names)]
+    let mut p = 0.0;
+    let mut q = (x - 1.0 - a) * (x + 1.0 - a);
+    let mut r = 4.0 * (x + 1.0 - a);
+    let mut s = 1.0 - a;
+    let mut ro = 0.0;
+    let mut t = 1.0_f64;
+    let mut g = 1.0;
+    while (t / g).abs() >= eps {
+        p += s;
+        q += r;
+        r += 8.0;
+        s += 2.0;
+        let tau = p + (1.0 + ro);
+        ro = tau / (q - tau);
+        t *= ro;
+        g += t;
+    }
+    a / (x + 1.0 - a) * g
+}
 fn pqasymp() {}
 
 pub fn incomplete_gamma(a: f64, x: f64, eps: f64) -> (f64, f64) {
@@ -295,23 +319,24 @@ pub fn incomplete_gamma(a: f64, x: f64, eps: f64) -> (f64, f64) {
     if dp >= DWARF {
         if a > 25.0 && mu.abs() < 0.2 {
             pqasymp();
-            return (0.0, 0.0); // TBD
+            (0.0, 0.0) // TBD
         } else if a > alfa(x) {
             let p = ptaylor(a, x, eps) * dp;
             let q = 1.0 - p;
-            return (p, q);
+            (p, q)
         } else if x < 1.0 {
             let q = qtaylor(a, x, eps);
             let p = 1.0 - q;
-            return (p, q);
+            (p, q)
         } else {
-            qfraction();
-            return (0.0, 0.0); // TBD
+            let q = qfraction(a, x, eps) * dp;
+            let p = 1.0 - q;
+            (p, q)
         }
     } else if a > x {
-        return (0.0, 1.0);
+        (0.0, 1.0)
     } else {
-        return (1.0, 0.0);
+        (1.0, 0.0)
     }
 }
 
