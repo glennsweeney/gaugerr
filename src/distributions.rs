@@ -15,39 +15,6 @@ fn ratfun<const M: usize, const N: usize>(x: f64, ak: [f64; M], bk: [f64; N]) ->
     num / den
 }
 
-fn auxln(x: f64) -> f64 {
-    #![allow(clippy::many_single_char_names)]
-    const A: [f64; 5] = [
-        3.899341537646e-5,
-        -8.310525299547e-4,
-        -1.423751838241e-1,
-        -5.717084236157e-1,
-        -4.999999994526e-1,
-    ];
-    const B: [f64; 4] = [
-        1.575899184525e-1,
-        9.914744762863e-1,
-        1.810083408290e0,
-        1.000000000000e0,
-    ];
-    if x <= -1.0 {
-        -GIANT
-    } else if x < -0.7 || x > 1.36 {
-        (1.0 + x).ln() - x
-    } else if x.abs() < MACHTOL {
-        -0.5 * x.powi(2)
-    } else if x > 0.0 {
-        x.powi(2) * ratfun(x, A, B)
-    } else {
-        let z = -x / (1.0 + x);
-        if z > 1.36 {
-            -((1.0 + z).ln() - z) + x * z
-        } else {
-            -z.powi(2) * ratfun(z, A, B) + x * z
-        }
-    }
-}
-
 fn gamma_pos(x: f64) -> f64 {
     #![allow(clippy::many_single_char_names)]
     const A: [f64; 5] = [
@@ -128,6 +95,93 @@ pub fn gamma(x: f64) -> f64 {
             std::f64::INFINITY
         } else {
             PI / (PI * x).sin() / gamma_pos(1.0 - x)
+        }
+    }
+}
+
+pub fn erf(x: f64) -> f64 {
+    const A: [f64; 3] = [3.16652890658e-1, 1.72227577039, 21.3853322378];
+    const B: [f64; 3] = [1.00000000000, 7.84374570830, 18.9522572415];
+    if x == 0.0 {
+        0.0
+    } else if x.abs() > (-(MACHTOL.ln())).sqrt() {
+        x / x.abs()
+    } else if x > 0.5 {
+        1.0 - erfc(x)
+    } else if x < -0.5 {
+        erfc(-x) - 1.0
+    } else {
+        x * ratfun(x * x, A, B)
+    }
+}
+
+pub fn erfc(x: f64) -> f64 {
+    const A1: [f64; 5] = [
+        4.3187787405e-5,
+        5.6316961891e-1,
+        3.0317993362,
+        6.8650184849,
+        7.3738883116,
+    ];
+    const B1: [f64; 5] = [
+        1.0000000000,
+        5.3542167949,
+        12.795529509,
+        15.184908190,
+        7.3739608908,
+    ];
+    const A2: [f64; 3] = [-5.16882262185e-2, -1.96068973726e-1, -4.25799643553e-2];
+    const B2: [f64; 3] = [1.0000000000, 9.21452411694e-1, 1.50942070545e-1];
+    if x < -(-(MACHTOL.ln())).sqrt() {
+        2.0
+    } else if x < -MACHTOL {
+        2.0 - erfc(-x)
+    } else if x < MACHTOL {
+        1.0
+    } else if x < 0.5 {
+        1.0 - erf(x)
+    } else if x < 4.0 {
+        (-x * x).exp() * ratfun(x, A1, B1)
+    } else if x >= (-DWARF.ln()).sqrt() {
+        0.0
+    } else if x * DWARF > (-(x * x)).exp() * 1.0 / PI.sqrt() {
+        0.0
+    } else {
+        let y = (-(x * x)).exp();
+        let z = 1.0 / (x * x);
+        y * (1.0 / PI.sqrt() + z * ratfun(z, A2, B2)) / x
+    }
+}
+
+fn auxln(x: f64) -> f64 {
+    #![allow(clippy::many_single_char_names)]
+    const A: [f64; 5] = [
+        3.899341537646e-5,
+        -8.310525299547e-4,
+        -1.423751838241e-1,
+        -5.717084236157e-1,
+        -4.999999994526e-1,
+    ];
+    const B: [f64; 4] = [
+        1.575899184525e-1,
+        9.914744762863e-1,
+        1.810083408290e0,
+        1.000000000000e0,
+    ];
+    if x <= -1.0 {
+        -GIANT
+    } else if x < -0.7 || x > 1.36 {
+        (1.0 + x).ln() - x
+    } else if x.abs() < MACHTOL {
+        -0.5 * x.powi(2)
+    } else if x > 0.0 {
+        x.powi(2) * ratfun(x, A, B)
+    } else {
+        let z = -x / (1.0 + x);
+        if z > 1.36 {
+            -((1.0 + z).ln() - z) + x * z
+        } else {
+            -z.powi(2) * ratfun(z, A, B) + x * z
         }
     }
 }
@@ -340,9 +394,52 @@ pub fn incomplete_gamma(a: f64, x: f64, eps: f64) -> (f64, f64) {
     }
 }
 
+// Note: tests are verified against Wolfram Alpha.
+
+#[cfg(test)]
+mod test_erf {
+
+    use approx;
+
+    #[test]
+    fn erf() {
+        approx::assert_relative_eq!(super::erf(-10.0), -1.0, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(-5.0), -0.999999999998463, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(-2.0), -0.995322265018953, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(-1.5), -0.966105146475311, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(-1.0), -0.842700792949715, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(-0.3), -0.328626759459128, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(0.0), 0.0, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(0.3), 0.3286267594591275, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(1.0), 0.8427007929497149, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(1.5), 0.9661051464753108, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(2.0), 0.9953222650189527, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(5.0), 0.9999999999984626, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erf(10.0), 1.0, max_relative = 1.0e-8);
+    }
+
+    #[test]
+    fn erfc() {
+        approx::assert_relative_eq!(super::erfc(-10.0), 2.0, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(-5.0), 1.9999999999984626, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(-2.0), 1.995322265019, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(-1.5), 1.9661051464753108, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(-1.0), 1.8427007929497148, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(-0.3), 1.3286267594591274, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(0.0), 1.0, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(0.3), 0.6713732405408726, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(1.0), 0.15729920705028513, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(1.5), 0.03389485352468927, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(2.0), 0.00467773498104727, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(5.0), 1.537459794428E-12, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(10.0), 0.0, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(26.5), 0.0, max_relative = 1.0e-8);
+        approx::assert_relative_eq!(super::erfc(30.0), 0.0, max_relative = 1.0e-8);
+    }
+}
+
 #[cfg(test)]
 mod test_gamma {
-    // https://keisan.casio.com/exec/system/1180573444
 
     use approx;
 
